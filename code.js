@@ -51,8 +51,10 @@ function Party(name, votes) {
     this.name = name;
   }
   this.setPerc = function(perc) { 
-    if (Number(perc) >= 0) {
-      this.perc = Number(perc);
+    let percText = perc + "";
+    percText = percText.replace(",", ".");
+    if (Number(percText) >= 0) {
+      this.perc = Number(percText);
     }
   }
   this.setVotes = function(votes) { 
@@ -371,12 +373,47 @@ function herberekenZetelsPerc() {
       var vasteZetels = Math.floor(allParties[i].perc/kiesdeler);
       allParties[i].seatsDirect = vasteZetels;
       allParties[i].seatsTotal = allParties[i].seatsDirect + allParties[i].seatsRest;
-      allParties[i].average1Up = allParties[i].perc/(allParties[i].seatsTotal + 1);  // tel 1 zetel bij en vergelijk dan de gemiddelden 
+      if (zetels < zetelsRekenGrens) {    
+        allParties[i].average1Up = allParties[i].perc - allParties[i].seatsDirect * kiesdeler;  // haal de volle zetels van het percentage af, de rest is voor de vergelijking 
+      } else {
+        allParties[i].average1Up = allParties[i].perc/(allParties[i].seatsTotal + 1);  // tel 1 zetel bij en neem het gemiddelde voor de vergelijking 
+      }
       totalVast += vasteZetels;
     }
   }
+
+  if (zetels < zetelsRekenGrens) {    
+    herberekenRestZetelsKleinPerc();
+  } else {
+    herberekenRestZetelsPerc();
+  }
+}
   
-  console.log("Rest zetels");
+function herberekenRestZetelsKleinPerc() {
+  console.log("Rest zetels percentage klein");
+  for (r=0; r<(zetels - totalVast); r++){
+    var partyHigh1Up;
+    var partyHigh1UpFound = false;
+    for (i=0; i<rows; i++){
+      if (allParties[i].name !== 'Overig' && allParties[i].perc >= 0,75*kiesdeler && allParties[i].seatsRest === 0) {
+        if (partyHigh1UpFound === false) {
+          partyHigh1Up = i;
+          partyHigh1UpFound = true;
+        } else if (   allParties[partyHigh1Up].average1Up < allParties[i].average1Up 
+                   || (   allParties[partyHigh1Up].average1Up === allParties[i].average1Up 
+                       && allParties[partyHigh1Up].perc < allParties[i].perc)) {
+          partyHigh1Up = i;
+        } 
+      }
+    }
+    allParties[partyHigh1Up].seatsRest += 1;
+    allParties[partyHigh1Up].seatsTotal = allParties[partyHigh1Up].seatsDirect + allParties[partyHigh1Up].seatsRest;
+    allParties[partyHigh1Up].addToSequence(r + 1);
+  }
+}
+
+function herberekenRestZetelsPerc() {
+  console.log("Rest zetels percentage");
   for (r=0; r<(zetels - totalVast); r++){
     var partyHigh1Up;
     var partyHigh1UpFound = false;
@@ -397,7 +434,6 @@ function herberekenZetelsPerc() {
     allParties[partyHigh1Up].addToSequence(r + 1);
     allParties[partyHigh1Up].average1Up = allParties[partyHigh1Up].perc/(allParties[partyHigh1Up].seatsTotal + 1);
   }
-
 }
 
 function numberR2(num) {
